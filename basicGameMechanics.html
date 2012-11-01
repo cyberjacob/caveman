@@ -4,15 +4,32 @@
     <title>Canvas tutorial</title>
     <script type="text/javascript">
     
+    // Classes
+    
+    function GameObject(type, x, y) {
+	    this.type = type;
+	    this.x = x;
+	    this.y = y;
+    }
+    
     // Initialisation
     
-    var x = 10;
-    var y = 10;
-    var newX = 10;
-    var newY = 10;
-	var speed = 5;
+    var blockSize = 16;
+    var movementAmount = 8;
 
+    var gameObjects = new Array();
+    var player;
+    
     function init() {
+    // Our player
+	    player = new GameObject("player", 64, 48);
+	    gameObjects.push(player);
+    
+    // Test objects
+    	gameObjects.push(new GameObject("tree", 128, 48));
+    	gameObjects.push(new GameObject("rock", 48, 48));
+    
+    // Event listeners
     	document.addEventListener('keydown', keyDown, false);
  	
 	    draw();
@@ -27,37 +44,66 @@
         // Get graphics context
 	    var ctx = canvas.getContext('2d');
           
-        // Fill the rect for the character
-	    ctx.fillStyle = "rgb(200,0,0)";
-	    ctx.fillRect (x,y,30,30);
-	    
+        // Fill the rect for the game objects
+        for (var i = 0; i < gameObjects.length; i++) {
+	        var gameObject = gameObjects[i];
+	        
+	        if (gameObject.type == "player")
+	    	    ctx.fillStyle = "rgb(200,0,0)";
+	    	else 
+	    		ctx.fillStyle = "rgb(0, 200, 0)"
+	    		
+		    ctx.fillRect (gameObject.x,gameObject.y,blockSize, blockSize);
+        }	    
     }
     
     // Handle movement
     
-    function animate() {
-    alert('animate');
-	    if (x != newX) {
-		    x += 1;
-	    }
-	    if (y != newY) {
-		    y += 1;
-	    }
-	    draw();
-    }
-
-    function move(direction) {
+    function playerWillCollide(direction, x, y) {
+/*     alert("direction = " + direction + "; gameobjectX = " + x + "; gameobjectY = " + y + "; playerX = " + player.x + "; playerY = " + player.y) */
+	        
 	    if (direction == "L") {
-		    newX -= 10;
+		    if (player.x - movementAmount >= x && player.x <= x + blockSize  && player.y + blockSize >= y && player.y < y + blockSize) {
+			    return true;
+		    }
 	    } else if (direction == "R") {
-		    newX += 10;
+		     if (player.x + movementAmount + blockSize > x && player.x + movementAmount + blockSize <= x + blockSize && player.y + blockSize > y && player.y < y + blockSize) {
+			    return true;
+		    }
 	    } else if (direction == "U") {
-	    	newY -= 10;
+		    if (player.y - movementAmount > y && player.y - movementAmount < y + blockSize && player.x >= x && player.x < x + blockSize) {
+			    return true;
+		    }
 	    } else if (direction == "D") {
-	    	newY += 10;
+	    	if (player.y + movementAmount > y && player.y + movementAmount + blockSize < y + blockSize) {
+		    	return true;
+	    	}
 	    }
+    }
+    
+    function move(direction) {
+	    for (var i = 0; i < gameObjects.length; i++) {
+	        var gameObject = gameObjects[i];
+	        
+	        if (gameObject == player)
+		        continue;
+	        	        
+    	    if (playerWillCollide(direction, gameObject.x, gameObject.y))
+    	    	return;
+        }
+    
+    	    if (direction == "L") {
+		    player.x -= movementAmount;
+	    } else if (direction == "R") {
+		    player.x += movementAmount;
+	    } else if (direction == "U") {
+	    	player.y -= movementAmount;
+	    } else if (direction == "D") {
+	    	player.y += movementAmount;
+	    }
+
 	    
-        setInterval(animate , 1);
+        draw();
     }
     
    // Handle key presses
