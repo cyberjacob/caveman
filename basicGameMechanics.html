@@ -1,0 +1,88 @@
+<html>
+
+  <head>
+    <title>Canvas tutorial</title>
+    <script type="text/javascript">
+    
+    // Initialisation
+    
+    var x = 10;
+    var y = 10;
+    var newX = 10;
+    var newY = 10;
+	var speed = 5;
+
+    function init() {
+    	document.addEventListener('keydown', keyDown, false);
+ 	
+	    draw();
+    }
+    
+    // Handle drawing      
+
+    function draw() {
+        var canvas = document.getElementById('tutorial');
+        canvas.width = canvas.width; // CLEAR CONTEXT
+
+        // Get graphics context
+	    var ctx = canvas.getContext('2d');
+          
+        // Fill the rect for the character
+	    ctx.fillStyle = "rgb(200,0,0)";
+	    ctx.fillRect (x,y,30,30);
+	    
+    }
+    
+    // Handle movement
+    
+    function animate() {
+    alert('animate');
+	    if (x != newX) {
+		    x += 1;
+	    }
+	    if (y != newY) {
+		    y += 1;
+	    }
+	    draw();
+    }
+
+    function move(direction) {
+	    if (direction == "L") {
+		    newX -= 10;
+	    } else if (direction == "R") {
+		    newX += 10;
+	    } else if (direction == "U") {
+	    	newY -= 10;
+	    } else if (direction == "D") {
+	    	newY += 10;
+	    }
+	    
+        setInterval(animate , 1);
+    }
+    
+   // Handle key presses
+    
+    function keyDown(e) {
+		keyCode = (e.keyCode ? e.keyCode : e.which);  
+		if(keyCode === 37){
+			move('L');
+		}
+		if(keyCode === 38){
+			move('U');
+		}
+		if(keyCode === 39){
+			move('R');
+		}
+		if(keyCode === 40){
+			move('D');
+		}
+    }
+
+    </script>
+  </head>
+  
+  <body onload="init()">
+    <canvas id="tutorial" width="500" height="300" style="background-color:lightgray"></canvas>
+  </body>
+  
+</html>
