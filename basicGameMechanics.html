@@ -2,17 +2,7 @@
 
   <head>
     <title>Canvas tutorial</title>
-   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-    <script src="lib/amq_jquery_adapter.js"></script>
-    <script src="lib/amq.js"></script>
-<script type="text/javascript">
-  var amq = org.activemq.Amq;
-  amq.init({ 
-    uri: 'mc.landoftheraven.com:8161', 
-    logging: true,
-    timeout: 20
-  });
-</script>
+
     <script type="text/javascript">
     
     // Classes
@@ -21,7 +11,7 @@
 	    this.type = type;
 	    this.x = x;
 	    this.y = y;
-	    this.name = undefined;
+	    this.description = undefined;
 	    
 	    this.canCollide = true;
 	    if (type == 0 || type == 1 || type == 2 || (type >= 20 && type <= 28))
@@ -43,6 +33,10 @@
 	var spriteNames = [
 	  'grass', 'shortGrass', 'cutTree', 'bush', 'sign', 'hole', '8rock', 'rock', 'stumpTL', 'stumpTR', 'stumpBL', 'stumpBR', 'triRockTL', 'triRockTR', 'triRockBL', 'triRockBR', 'largeRockTL', 'largeRockTR', 'largeRockBL', 'largeRockBR', 'dirtTL', 'dirtTM', 'dirtTR', 'dirtML', 'dirtMM', 'dirtMR', 'dirtBL', 'dirtBM', 'dirtBR', 'relicTL', 'relicTR', 'relicBL', 'relicBR' 
 	];
+	
+	var canFallInHoles = true;
+	var shouldWalkRandomly = false;
+	var canBreakBlocks = false;
     
     function loadSpriteSheet() {
 	      tileSize = 16;
@@ -103,7 +97,7 @@
 		    }
 		}
 		
-		xmlhttp.open("GET","map.txt",true);
+		xmlhttp.open("GET","map1.txt",true);
 		xmlhttp.send();
     }
     
@@ -129,9 +123,9 @@
 					var x = components[0] * 16;
 					var y = components[1] * 16;
 					var id = components[2];
-				    
+	
 					var gameObject = new GameObject(id, x, y);
-				    gameObjects.push(gameObject);
+				    overlayGenes.push(gameObject);
 				}
 				
 				// Tell us to load and draw srpites
@@ -139,7 +133,7 @@
 		    }
 		}
 		
-		xmlhttp.open("GET","map.txt",true);
+		xmlhttp.open("GET","overlay1.txt",true);
 		xmlhttp.send();
 	}
     
@@ -170,17 +164,7 @@
 /*     	loadSpriteSheet(); */
     }
 
-   //Handle AMQ messages.
-var myHandler =
-{
-  rcvMessage: function(message)
-  {
-     alert("received "+message);
-  }
-};
 
-amq.addListener("camhackid" , "topic://CHAT.DEMO" , myHandler.rcvMessage);
-    
     // Handle drawing      
 
     function draw() {
@@ -201,8 +185,17 @@ amq.addListener("camhackid" , "topic://CHAT.DEMO" , myHandler.rcvMessage);
 	       catch(e) { }
         }	    
         
+        // Draw our overlay genes
+        for (var i = 0; i < overlayGenes.length; i++) {
+	        var gameObject = overlayGenes[i];
+	        var type = gameObject.type;
+
+   			ctx.drawImage(sprites1x1[gameObject.type], gameObject.x, gameObject.y);
+        }	    
+        
+        
         // draw our player
-			ctx.drawImage(sprites1x1[33], player.x, player.y);
+		ctx.drawImage(sprites1x1[33], player.x, player.y);
     }
     
     // Handling genes
@@ -213,67 +206,76 @@ amq.addListener("camhackid" , "topic://CHAT.DEMO" , myHandler.rcvMessage);
 	    
 	    for (var i = 0; i < collectedGenes.length; i++) {
 		    var gene = collectedGenes[i];
-		    var name = gene.name;
-		    if (name == undefined) 
-			    name = "A gene";
+		    var description = gene.description;
+		    var link = gene.link;
 			   
-			collectedGenesText += "<tr> <td width=200>"+ name + "</td> <td> <input id='" + i + "' type='button' value='Use gene' onclick='useGene(this)' /> </td> </tr>";
+			collectedGenesText += "<tr> <td width=400>"+ description + "</td> <td> <input id='" + i + "' type='button' value='More info...' onclick='useGene(this)' /> " + "</td> </tr>";
 	    }
 	    
 	    collectedGenesText += "</table>"
-	    
+	    	    
 	    collectedGenesDiv.innerHTML = collectedGenesText;
     }
     
     function collectGene(geneObject) {
 	    collectedGenes.push(geneObject);
-	    
+
+		if (geneObject.type == 41) {
+			movementAmount *= 2;
+			geneObject.description = "Gene correction therapy has cured you of osteoarthritis";
+			geneObject.link = "http://en.wikipedia.org/wiki/Osteoarthritis";
+		} else if (geneObject.type == 42) {
+			movementAmount /= 2;
+			geneObject.description = "A mutation in ARHGEF3 has caused you to be born with osteoarthritis, consider gene correction therapy";
+			geneObject.link = "http://www.ncbi.nlm.nih.gov/pubmed/21452313";
+		} else if (geneObject.type == 43) {
+			canFallInHoles = false;
+			geneObject.description = "A variant in the gene, HMGA2, has increased your brain size and IQ. You are now inteligent enough not to fall in holes";
+			geneObject.link = "http://www.ncbi.nlm.nih.gov/pubmed/22504417"; 
+		} else if (geneObject.type == 44) {
+			shouldWalkRandomly = true;
+			geneObject.description = "A unfortunate and random mutation in the gene MESTP3 has caused motor coordination problems";
+			geneObject.link = "http://www.ncbi.nlm.nih.gov/pubmed/21473668";
+		}
+				
 	    reloadGeneData();
     }
     
     function useGene(sender) {
 	    var geneIndex = sender.id;
 		var geneObject = collectedGenes[geneIndex];
-		var name = gene.name;
-	    if (name == undefined) 
-		    name = "A gene";
-		    
-		alert("You've added '" + name + " to your human");
+		var link = geneObject.link;
 		
-		collectedGenes.splice(geneIndex, 1);
-		reloadGeneData();
+		window.open(link, '_blank');
+/* 		window.focus(); */
     }
     
     // Handle movement
     
     function playerWillCollide(direction, x, y) {	        
-	    if (direction == "L") {
+	    if ((direction == "L" && !shouldWalkRandomly) || (shouldWalkRandomly && direction == "R")) {
 		    if (player.x - movementAmount >= x && player.x <= x + blockSize  && player.y + blockSize > y && player.y < y + blockSize) {
 			    return true;
 		    }
-	    } else if (direction == "R") {
+	    } else if ((direction == "R" && !shouldWalkRandomly) || (shouldWalkRandomly && direction == "L")) {
 		     if (player.x + movementAmount + blockSize > x && player.x + movementAmount + blockSize <= x + blockSize && player.y + blockSize > y && player.y < y + blockSize) {
 			    return true;
 		    }
-	    } else if (direction == "U") {
+	    } else if ((direction == "U" && !shouldWalkRandomly) || (shouldWalkRandomly && direction == "D")) {
 		    if (player.y - movementAmount > y && player.y - movementAmount < y + blockSize && player.x + blockSize > x && player.x < x + blockSize) {
 			    return true;
 		    }
-	    } else if (direction == "D") {
+	    } else if ((direction == "D" && !shouldWalkRandomly) || (shouldWalkRandomly && direction == "U")) {
 	    	if (player.y + movementAmount + blockSize > y && player.y + movementAmount < y + blockSize && player.x + blockSize > x && player.x < x + blockSize) {
 		    	return true;
 	    	}
 	    }
     }
     
-    function move(direction) {
-<<<<<<< HEAD
-/*     alert('move'); */
-=======
-amq.sendMessage("topic://CHAT.DEMO", "Hello World!");
->>>>>>> ab81d11093a8b5e790dc59575f78748d96293d1e
-    	var updatedGameObjects = gameObjects;
-    
+    function move(direction) {    
+    	var holeDeath = false;
+    	
+    	// Check for regular collisions
 	    for (var i = 0; i < gameObjects.length; i++) {
 	        var gameObject = gameObjects[i];
 	        
@@ -281,33 +283,66 @@ amq.sendMessage("topic://CHAT.DEMO", "Hello World!");
 		        continue;
 	        	        
     	    if (gameObject.canCollide && playerWillCollide(direction, gameObject.x, gameObject.y)) {
-	    	    if (gameObject.type > 34) {
-		    	    collectGene(gameObject);
-		    	    updatedGameObjects.splice(i,1);
+	    	    if (gameObject.type == 5 && canFallInHoles) {
+	    	    	holeDeath = true;
 	    	    } else {
-	    	    	return;
-	    	    }
+		    	    return;
+	    	    }   
+    	    } 
+        }
+
+        // Check for collisions with genes
+    	var updatedGenes = overlayGenes;
+
+		 for (var i = 0; i < overlayGenes.length; i++) {
+	        var gameObject = overlayGenes[i];
+	        	        
+    	    if (playerWillCollide(direction, gameObject.x, gameObject.y)) {
+	        	updatedGenes.splice(i, 1);
+	        	collectGene(gameObject);
     	    }
         }
-        
-        gameObjects = updatedGameObjects;
-    
-	    if (direction == "L") {
+
+        overlayGenes = updatedGenes;
+
+        // Lets move
+	    if ((direction == "L" && !shouldWalkRandomly) || (shouldWalkRandomly && direction == "R")) {
 		    player.x -= movementAmount;
-	    } else if (direction == "R") {
+	    } else if ((direction == "R" && !shouldWalkRandomly) || (shouldWalkRandomly && direction == "L")) {
 		    player.x += movementAmount;
-	    } else if (direction == "U") {
+	    } else if ((direction == "U" && !shouldWalkRandomly) || (shouldWalkRandomly && direction == "D")) {
 	    	player.y -= movementAmount;
-	    } else if (direction == "D") {
+	    } else if ((direction == "D" && !shouldWalkRandomly) || (shouldWalkRandomly && direction == "U")) {
 	    	player.y += movementAmount;
 	    }
-
 	    
         draw();
+        
+	    if (holeDeath) {
+	    		alert("Game over, your IQ was so low that you forget that holes can kill and fell in a hole. Good job.");
+	    		window.location.reload(false); 
+	    }
+    }
+    
+    function breakSurroundingBlocks() {
+    	// Check for regular collisions
+	    for (var i = 0; i < gameObjects.length; i++) {
+	        var gameObject = gameObjects[i];
+	        
+	        if (gameObject == player)
+		        continue;
+	        	        
+    	    if (gameObject.canCollide && playerWillCollide(direction, gameObject.x, gameObject.y)) {
+	    	    if (gameObject.type == 5 && canFallInHoles) {
+	    	    	holeDeath = true;
+	    	    } else {
+		    	    return;
+	    	    }   
+    	    } 
+        }
     }
     
    // Handle key presses
-    
     function keyDown(e) {
 		keyCode = (e.keyCode ? e.keyCode : e.which);  
 		if(keyCode === 37){
@@ -321,6 +356,9 @@ amq.sendMessage("topic://CHAT.DEMO", "Hello World!");
 		}
 		if(keyCode === 40){
 			move('D');
+		}
+		if (keyCode == 32 && canBreakBlocks) {
+			breakSurroundingBlocks()
 		}
     }
 
