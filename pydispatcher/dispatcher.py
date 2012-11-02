@@ -3,11 +3,13 @@
 import threading
 import socket
 import select
+import random
 
 PORT=1337
 
 class Connection:
 	def __init__(self, manager, socket):
+		self.uid = random.random()
 		self.manager = manager
 		self.socket = socket
 		self.thread = threading.Thread(target=self.run)
@@ -26,9 +28,11 @@ class Connection:
 					self.manager.send(buf)	
 
 		self.socket.close()
+		self.manager.remove(self.uid)
 
 	def send(self, message):
 		self.socket.send(message)
+		print " [M] Received message: " + message
 
 class Dispatcher:
 	def __init__(self):
@@ -49,5 +53,10 @@ class Dispatcher:
 	def send(self, message):
 		for x in self.connections:
 			x.send(message)
+
+	def remove(self, uid):
+		for x in self.connections:
+			if x.uid == uid:
+				self.connections.remove(x)
 
 Dispatcher()
