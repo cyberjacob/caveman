@@ -10,29 +10,84 @@
 	    this.type = type;
 	    this.x = x;
 	    this.y = y;
+	    this.name = undefined;
+	    
+	    this.canCollide = true;
+	    if (type == "grass" || type == "cutTree" || type == "dirt")
+		    this.canCollide = false;
     }
     
-    // Initialisation
+    // Initialisation how so 
     
     var blockSize = 16;
     var movementAmount = 8;
 
     var gameObjects = new Array();
+    var collectedGenes = new Array();
     var player;
     
+    var sprites1x1 = [];
+    var spriteContexts = [];
+	var spriteNames = [
+	  'grass', 'shortGrass', 'cutTree', 'bush', 'sign', 'hole', '8rock', 'rock', 'stumpTL', 'stumpTR', 'stumpBL', 'stumpBR', 'triRockTL', 'triRockTR', 'triRockBL', 'triRockBR', 'largeRockTL', 'largeRockTR', 'largeRockBL', 'largeRockBR', 'dirtTL', 'dirtTM', 'dirtTR', 'dirtML', 'dirtMM', 'dirtMR', 'dirtBL', 'dirtBM', 'dirtBR', 'relicTL', 'relicTR', 'relicBL', 'relicBR' 
+	];
+    
+    function loadSpriteSheet() {
+	      tileSize = 16;
+	      spritesImage = new Image();
+	      spritesImage.src = 'spriteSheet.png';
+	      spritesImage.onload = function() {			  
+			  for (var i=0; i<spriteNames.length; i++) {
+				   sprites1x1[i] = document.createElement('canvas');
+				   sprites1x1[i].width = tileSize;
+				   sprites1x1[i].height = tileSize;
+				   
+				   spriteContexts[i] = sprites1x1[i].getContext('2d');
+
+				   spriteContexts[i].drawImage(spritesImage, tileSize*i, 0, tileSize, tileSize, 0, 0, tileSize, tileSize);
+			  }
+			  
+	  		  draw();
+		  }
+    }
+    
+    function loadMapFile() {
+		var xmlhttp;
+		if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
+			xmlhttp=new XMLHttpRequest();
+		}
+		
+		var mapData;
+		  
+		xmlhttp.onreadystatechange = function() {
+		    mapData = xmlhttp.responseText;
+		}
+		
+		xmlhttp.open("GET","map.txt",true);
+		xmlhttp.send();
+    }
+    
     function init() {
-    // Our player
-	    player = new GameObject("player", 64, 48);
+	    // Our player
+	    player = new GameObject(2, 64, 48);
 	    gameObjects.push(player);
     
-    // Test objects
-    	gameObjects.push(new GameObject("tree", 128, 48));
-    	gameObjects.push(new GameObject("rock", 48, 48));
+	    // Test objects
+    	gameObjects.push(new GameObject(3, 128, 48));
+    	gameObjects.push(new GameObject(4, 48, 48));
+    	gameObjects.push(new GameObject(5, 48, 64));
+    	gameObjects.push(new GameObject(10, 256, 128));
+    	gameObjects.push(new GameObject(10, 128, 256));
+    	gameObjects.push(new GameObject(0, 64, 256));
     
-    // Event listeners
+	    // Event listeners
     	document.addEventListener('keydown', keyDown, false);
- 	
-	    draw();
+    	
+    	    	loadMapFile();
+
+    	
+    	// Load sprites
+    	loadSpriteSheet();
     }
     
     // Handle drawing      
@@ -48,22 +103,55 @@
         for (var i = 0; i < gameObjects.length; i++) {
 	        var gameObject = gameObjects[i];
 	        
-	        if (gameObject.type == "player")
-	    	    ctx.fillStyle = "rgb(200,0,0)";
-	    	else 
-	    		ctx.fillStyle = "rgb(0, 200, 0)"
-	    		
-		    ctx.fillRect (gameObject.x,gameObject.y,blockSize, blockSize);
+
+			ctx.drawImage(sprites1x1[gameObject.type], gameObject.x, gameObject.y);
         }	    
+    }
+    
+    // Handling genes
+    
+    function reloadGeneData() {
+	   	var collectedGenesDiv = document.getElementById('collectedGenes');
+	    var collectedGenesText = "<table>";
+	    
+	    for (var i = 0; i < collectedGenes.length; i++) {
+		    var gene = collectedGenes[i];
+		    var name = gene.name;
+		    if (name == undefined) 
+			    name = "A gene";
+			   
+			collectedGenesText += "<tr> <td width=200>"+ name + "</td> <td> <input id='" + i + "' type='button' value='Use gene' onclick='useGene(this)' /> </td> </tr>";
+	    }
+	    
+	    collectedGenesText += "</table>"
+	    
+	    collectedGenesDiv.innerHTML = collectedGenesText;
+    }
+    
+    function collectGene(geneObject) {
+	    collectedGenes.push(geneObject);
+	    
+	    reloadGeneData();
+    }
+    
+    function useGene(sender) {
+	    var geneIndex = sender.id;
+		var geneObject = collectedGenes[geneIndex];
+		var name = gene.name;
+	    if (name == undefined) 
+		    name = "A gene";
+		    
+		alert("You've added '" + name + " to your human");
+		
+		collectedGenes.splice(geneIndex, 1);
+		reloadGeneData();
     }
     
     // Handle movement
     
-    function playerWillCollide(direction, x, y) {
-/*     alert("direction = " + direction + "; gameobjectX = " + x + "; gameobjectY = " + y + "; playerX = " + player.x + "; playerY = " + player.y) */
-	        
+    function playerWillCollide(direction, x, y) {	        
 	    if (direction == "L") {
-		    if (player.x - movementAmount >= x && player.x <= x + blockSize  && player.y + blockSize >= y && player.y < y + blockSize) {
+		    if (player.x - movementAmount >= x && player.x <= x + blockSize  && player.y + blockSize > y && player.y < y + blockSize) {
 			    return true;
 		    }
 	    } else if (direction == "R") {
@@ -71,28 +159,38 @@
 			    return true;
 		    }
 	    } else if (direction == "U") {
-		    if (player.y - movementAmount > y && player.y - movementAmount < y + blockSize && player.x >= x && player.x < x + blockSize) {
+		    if (player.y - movementAmount > y && player.y - movementAmount < y + blockSize && player.x + blockSize > x && player.x < x + blockSize) {
 			    return true;
 		    }
 	    } else if (direction == "D") {
-	    	if (player.y + movementAmount > y && player.y + movementAmount + blockSize < y + blockSize) {
+	    	if (player.y + movementAmount + blockSize > y && player.y + movementAmount < y + blockSize && player.x + blockSize > x && player.x < x + blockSize) {
 		    	return true;
 	    	}
 	    }
     }
     
     function move(direction) {
+    	var updatedGameObjects = gameObjects;
+    
 	    for (var i = 0; i < gameObjects.length; i++) {
 	        var gameObject = gameObjects[i];
 	        
 	        if (gameObject == player)
 		        continue;
 	        	        
-    	    if (playerWillCollide(direction, gameObject.x, gameObject.y))
-    	    	return;
+    	    if (gameObject.canCollide && playerWillCollide(direction, gameObject.x, gameObject.y)) {
+	    	    if (gameObject.type > 34) {
+		    	    collectGene(gameObject);
+		    	    updatedGameObjects.splice(i,1);
+	    	    } else {
+	    	    	return;
+	    	    }
+    	    }
         }
+        
+        gameObjects = updatedGameObjects;
     
-    	    if (direction == "L") {
+	    if (direction == "L") {
 		    player.x -= movementAmount;
 	    } else if (direction == "R") {
 		    player.x += movementAmount;
@@ -129,6 +227,8 @@
   
   <body onload="init()">
     <canvas id="tutorial" width="500" height="300" style="background-color:lightgray"></canvas>
+    <div id="collectedGenes">You have no collected genes
+    </div> 
   </body>
   
 </html>
