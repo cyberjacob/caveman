@@ -13,7 +13,7 @@
 	    this.name = undefined;
 	    
 	    this.canCollide = true;
-	    if (type == "grass" || type == "cutTree" || type == "dirt")
+	    if (type == 0 || type == 1 || type == 2 || (type >= 20 && type <= 28))
 		    this.canCollide = false;
     }
     
@@ -23,6 +23,7 @@
     var movementAmount = 8;
 
     var gameObjects = new Array();
+    var overlayGenes = new Array();
     var collectedGenes = new Array();
     var player;
     
@@ -36,8 +37,11 @@
 	      tileSize = 16;
 	      spritesImage = new Image();
 	      spritesImage.src = 'spriteSheet.png';
+	      
+	      var max = spritesImage.width / 16;
+	      
 	      spritesImage.onload = function() {			  
-			  for (var i=0; i<spriteNames.length; i++) {
+			  for (var i=0; i<max; i++) {
 				   sprites1x1[i] = document.createElement('canvas');
 				   sprites1x1[i].width = tileSize;
 				   sprites1x1[i].height = tileSize;
@@ -52,42 +56,107 @@
     }
     
     function loadMapFile() {
+    	// Get the contents of the file
 		var xmlhttp;
 		if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
 			xmlhttp=new XMLHttpRequest();
 		}
 		
 		var mapData;
-		  
+		  		  
 		xmlhttp.onreadystatechange = function() {
 		    mapData = xmlhttp.responseText;
+
+		    if (xmlhttp.readyState == 4) {
+        		// Parse the data
+				var lines = mapData.split("\n");
+			
+				for (var i = 0; i < lines.length; i++) {
+					var line = lines[i];
+					var components = line.split(",");
+					var x = components[0] * 16;
+					var y = components[1] * 16;
+					var id = components[2];
+					
+				    if (id == 33) {
+				        player = new GameObject(33, x, y);
+					    id = 1;
+				    }
+				    
+					var gameObject = new GameObject(id, x, y);
+				    gameObjects.push(gameObject);
+				}
+				
+				// Tell us to load and draw srpites
+				loadSpriteSheet();
+		    }
 		}
 		
 		xmlhttp.open("GET","map.txt",true);
 		xmlhttp.send();
     }
     
+    function loadOverlayFile() {
+	    // Get the contents of the file
+		var xmlhttp;
+		if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
+			xmlhttp=new XMLHttpRequest();
+		}
+		
+		var mapData;
+		  		  
+		xmlhttp.onreadystatechange = function() {
+		    mapData = xmlhttp.responseText;
+
+		    if (xmlhttp.readyState == 4) {
+        		// Parse the data
+				var lines = mapData.split("\n");
+			
+				for (var i = 0; i < lines.length; i++) {
+					var line = lines[i];
+					var components = line.split(",");
+					var x = components[0] * 16;
+					var y = components[1] * 16;
+					var id = components[2];
+				    
+					var gameObject = new GameObject(id, x, y);
+				    gameObjects.push(gameObject);
+				}
+				
+				// Tell us to load and draw srpites
+				loadSpriteSheet();
+		    }
+		}
+		
+		xmlhttp.open("GET","map.txt",true);
+		xmlhttp.send();
+	}
+    
     function init() {
 	    // Our player
-	    player = new GameObject(2, 64, 48);
+	/*
+    player = new GameObject(2, 64, 48);
 	    gameObjects.push(player);
     
+*/
 	    // Test objects
+/*
     	gameObjects.push(new GameObject(3, 128, 48));
     	gameObjects.push(new GameObject(4, 48, 48));
     	gameObjects.push(new GameObject(5, 48, 64));
     	gameObjects.push(new GameObject(10, 256, 128));
     	gameObjects.push(new GameObject(10, 128, 256));
     	gameObjects.push(new GameObject(0, 64, 256));
+*/
     
 	    // Event listeners
     	document.addEventListener('keydown', keyDown, false);
     	
-    	    	loadMapFile();
-
+    	loadMapFile();
+    	loadOverlayFile();
     	
     	// Load sprites
-    	loadSpriteSheet();
+/*     	loadSpriteSheet(); */
     }
     
     // Handle drawing      
@@ -102,10 +171,16 @@
         // Fill the rect for the game objects
         for (var i = 0; i < gameObjects.length; i++) {
 	        var gameObject = gameObjects[i];
-	        
-
-			ctx.drawImage(sprites1x1[gameObject.type], gameObject.x, gameObject.y);
+	        var type = gameObject.type;
+	        		       
+	       try {
+	   			ctx.drawImage(sprites1x1[gameObject.type], gameObject.x, gameObject.y);
+	       }
+	       catch(e) { }
         }	    
+        
+        // draw our player
+			ctx.drawImage(sprites1x1[33], player.x, player.y);
     }
     
     // Handling genes
@@ -170,6 +245,7 @@
     }
     
     function move(direction) {
+/*     alert('move'); */
     	var updatedGameObjects = gameObjects;
     
 	    for (var i = 0; i < gameObjects.length; i++) {
@@ -226,7 +302,7 @@
   </head>
   
   <body onload="init()">
-    <canvas id="tutorial" width="500" height="300" style="background-color:lightgray"></canvas>
+    <canvas id="tutorial" width="512" height="512" style="background-color:lightgray"></canvas>
     <div id="collectedGenes">You have no collected genes
     </div> 
   </body>
