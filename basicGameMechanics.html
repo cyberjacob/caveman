@@ -37,6 +37,9 @@
 	var canFallInHoles = true;
 	var shouldWalkRandomly = false;
 	var canBreakBlocks = false;
+	var isGhostly = false;
+	
+	var currentMap = 1;
     
     function loadSpriteSheet() {
 	      tileSize = 16;
@@ -97,7 +100,7 @@
 		    }
 		}
 		
-		xmlhttp.open("GET","map1.txt",true);
+		xmlhttp.open("GET","map" + currentMap + ".txt",true);
 		xmlhttp.send();
     }
     
@@ -133,7 +136,7 @@
 		    }
 		}
 		
-		xmlhttp.open("GET","overlay1.txt",true);
+		xmlhttp.open("GET","overlay" + currentMap + ".txt",true);
 		xmlhttp.send();
 	}
     
@@ -153,6 +156,14 @@
     	gameObjects.push(new GameObject(10, 128, 256));
     	gameObjects.push(new GameObject(0, 64, 256));
 */
+
+	    gameObjects = new Array();
+	    overlayGenes = new Array();
+	    collectedGenes = new Array();
+	    player = undefined;
+	    
+	    sprites1x1 = [];
+	    spriteContexts = [];
     
 	    // Event listeners
     	document.addEventListener('keydown', keyDown, false);
@@ -168,6 +179,11 @@
     // Handle drawing      
 
     function draw() {
+  /*
+          if (currentMap == 2) {
+	            alert("draw");
+			}
+*/
         var canvas = document.getElementById('tutorial');
         canvas.width = canvas.width; // CLEAR CONTEXT
 
@@ -189,10 +205,12 @@
         for (var i = 0; i < overlayGenes.length; i++) {
 	        var gameObject = overlayGenes[i];
 	        var type = gameObject.type;
-
-   			ctx.drawImage(sprites1x1[gameObject.type], gameObject.x, gameObject.y);
+	        
+/* 	        try { */
+      			ctx.drawImage(sprites1x1[gameObject.type], gameObject.x, gameObject.y); 
+/* 	        } */
+/* 	        catch(e) { } */
         }	    
-        
         
         // draw our player
 		ctx.drawImage(sprites1x1[33], player.x, player.y);
@@ -202,14 +220,14 @@
     
     function reloadGeneData() {
 	   	var collectedGenesDiv = document.getElementById('collectedGenes');
-	    var collectedGenesText = "<table>";
+	    var collectedGenesText = "<table border='1'>";
 	    
 	    for (var i = 0; i < collectedGenes.length; i++) {
 		    var gene = collectedGenes[i];
 		    var description = gene.description;
 		    var link = gene.link;
 			   
-			collectedGenesText += "<tr> <td width=400>"+ description + "</td> <td> <input id='" + i + "' type='button' value='More info...' onclick='useGene(this)' /> " + "</td> </tr>";
+			collectedGenesText += "<tr style='padding:10px'> <td width=400>"+ description + "</td> <td> <input id='" + i + "' type='button' value='More info...' onclick='useGene(this)' /> " + "</td> </tr>";
 	    }
 	    
 	    collectedGenesText += "</table>"
@@ -236,6 +254,13 @@
 			shouldWalkRandomly = true;
 			geneObject.description = "A unfortunate and random mutation in the gene MESTP3 has caused motor coordination problems";
 			geneObject.link = "http://www.ncbi.nlm.nih.gov/pubmed/21473668";
+		} else if (geneObject.type == 45) {
+			canBreakBlocks = true;
+			geneObject.description = "A alteration in genes PRKAG2 and TFR2 have higher Hematocrit levels thus increasing your strength (SPACE key)";
+			geneObject.link = "http://en.wikipedia.org/wiki/Hematocrit";
+		} else if (geneObject.type == 46) {
+			isGhostly = true;
+			geneObject.description = "A alteration in some genes have caused vivid halucinations and lucid dreams, you can now experience the world in another light";
 		}
 				
 	    reloadGeneData();
@@ -252,7 +277,10 @@
     
     // Handle movement
     
-    function playerWillCollide(direction, x, y) {	        
+    function playerWillCollide(direction, x, y) {	  
+	    if (isGhostly)
+		    return false;      
+	
 	    if ((direction == "L" && !shouldWalkRandomly) || (shouldWalkRandomly && direction == "R")) {
 		    if (player.x - movementAmount >= x && player.x <= x + blockSize  && player.y + blockSize > y && player.y < y + blockSize) {
 			    return true;
@@ -322,6 +350,15 @@
 	    		alert("Game over, your IQ was so low that you forget that holes can kill and fell in a hole. Good job.");
 	    		window.location.reload(false); 
 	    }
+	    
+	    // Check for new area
+	    if (player.y <= 0) {
+		    currentMap += 1;
+		    init();
+	    } else if (player.y >= 512) {
+		    currentMap -= 1;
+		    init();
+	    }
     }
     
     function breakSurroundingBlocks() {
@@ -331,15 +368,17 @@
 	        
 	        if (gameObject == player)
 		        continue;
+		        
+		     if (gameObject.type == 5)
+			     continue;
 	        	        
-    	    if (gameObject.canCollide && playerWillCollide(direction, gameObject.x, gameObject.y)) {
-	    	    if (gameObject.type == 5 && canFallInHoles) {
-	    	    	holeDeath = true;
-	    	    } else {
-		    	    return;
-	    	    }   
-    	    } 
+    	    if ((gameObject.x == player.x && gameObject.y == player.y) || ((gameObject.x == player.x - 16 || gameObject.x == player.x + 16) && gameObject.y == player.y) || ((gameObject.y == player.y - 16 || gameObject.y == player.y + 16) && gameObject.x == player.x)) {
+    	    	gameObject.type = 0;
+    	    	gameObject.canCollide = false;
+    	    }
         }
+                
+        draw();
     }
     
    // Handle key presses
@@ -366,8 +405,8 @@
   </head>
   
   <body onload="init()">
-    <canvas id="tutorial" width="512" height="512" style="background-color:lightgray"></canvas>
-    <div id="collectedGenes">You have no collected genes
+    <canvas id="tutorial" width="512" height="512" style="background-color:lightgray; float:left;"></canvas>
+    <div id="collectedGenes" style="float:right;">You have no collected genes
     </div> 
   </body>
   
