@@ -2,6 +2,17 @@
 
   <head>
     <title>Canvas tutorial</title>
+   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script src="lib/amq_jquery_adapter.js"></script>
+    <script src="lib/amq.js"></script>
+<script type="text/javascript">
+  var amq = org.activemq.Amq;
+  amq.init({ 
+    uri: 'mc.landoftheraven.com:8161', 
+    logging: true,
+    timeout: 20
+  });
+</script>
     <script type="text/javascript">
     
     // Classes
@@ -158,6 +169,17 @@
     	// Load sprites
 /*     	loadSpriteSheet(); */
     }
+
+   //Handle AMQ messages.
+var myHandler =
+{
+  rcvMessage: function(message)
+  {
+     alert("received "+message);
+  }
+};
+
+amq.addListener("camhackid" , "topic://CHAT.DEMO" , myHandler.rcvMessage);
     
     // Handle drawing      
 
@@ -245,7 +267,11 @@
     }
     
     function move(direction) {
+<<<<<<< HEAD
 /*     alert('move'); */
+=======
+amq.sendMessage("topic://CHAT.DEMO", "Hello World!");
+>>>>>>> ab81d11093a8b5e790dc59575f78748d96293d1e
     	var updatedGameObjects = gameObjects;
     
 	    for (var i = 0; i < gameObjects.length; i++) {
