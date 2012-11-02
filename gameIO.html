@@ -3,18 +3,32 @@
     <title>Canvas tutorial</title>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      var socket = io.connect('http://localhost');
-  socket.on('news', function (data) {
-    console.log(data);
-    socket.emit('my other event', { my: 'data' });
-  });
-</script>
+        // Create a socket instance
+        var socket = new WebSocket('ws://mc.landoftheraven.com:1337');
+
+        // Open the socket
+        socket.onopen = function(event) {
+
+        // Send an initial message
+        socket.send('I am the client and I\'m listening!');
+
+        // Listen for messages
+        socket.onmessage = function(event) {
+          console.log('Client received a message',event);
+        };
+
+        // Listen for socket closes
+        socket.onclose = function(event) {
+          console.log('Client notified socket has closed',event);
+        };
+
+        // To close the socket....
+        //socket.close()
+      };
+    </script>
   </head>
   
-  <body onload="init()">
-    <canvas id="tutorial" width="512" height="512" style="background-color:lightgray"></canvas>
-    <div id="collectedGenes">You have no collected genes
-    </div> 
+  <body>
+    Yeah!
   </body>
-  
 </html>
