@@ -1,10 +1,9 @@
 <html>
   <head>
     <title>Canvas tutorial</title>
-    <script src="/socket.io/socket.io.js"></script>
     <script>
         // Create a socket instance
-        var socket = new WebSocket('ws://mc.landoftheraven.com:1337');
+        var socket = new WebSocket('ws://localhost:1337/ws');
 
         // Open the socket
         socket.onopen = function(event) {
@@ -14,7 +13,7 @@
 
         // Listen for messages
         socket.onmessage = function(event) {
-          console.log('Client received a message',event);
+          console.log('Client received a message: ',event.data);
         };
 
         // Listen for socket closes
@@ -27,7 +26,6 @@
       };
     </script>
   </head>
-  
   <body>
     Yeah!
   </body>

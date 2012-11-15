@@ -1,14 +1,11 @@
 <html>
 
   <head>
-    <title>Canvas tutorial</title>
-
+    <title>Play Caveman!</title>
     <script type="text/javascript">
-    
     // Classes
-    
     function GameObject(type, x, y) {
-	    this.type = type;
+    	this.type = type;
 	    this.x = x;
 	    this.y = y;
 	    this.description = undefined;
@@ -67,7 +64,9 @@
     	// Get the contents of the file
 		var xmlhttp;
 		if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
-			xmlhttp=new XMLHttpRequest();
+			xmlhttp = new XMLHttpRequest();
+		} else {
+			alert("It doesn't look like your browser is supported :(");
 		}
 		
 		var mapData;
@@ -146,15 +145,6 @@
     player = new GameObject(2, 64, 48);
 	    gameObjects.push(player);
     
-*/
-	    // Test objects
-/*
-    	gameObjects.push(new GameObject(3, 128, 48));
-    	gameObjects.push(new GameObject(4, 48, 48));
-    	gameObjects.push(new GameObject(5, 48, 64));
-    	gameObjects.push(new GameObject(10, 256, 128));
-    	gameObjects.push(new GameObject(10, 128, 256));
-    	gameObjects.push(new GameObject(0, 64, 256));
 */
 
 	    gameObjects = new Array();
@@ -405,7 +395,7 @@
   </head>
   
   <body onload="init()">
-    <canvas id="tutorial" width="512" height="512" style="background-color:lightgray; float:left;"></canvas>
+    <canvas id="tutorial" width="512" height="512" style="background-color:lightgray; float:left;">Test</canvas>
     <div id="collectedGenes" style="float:right;">You have no collected genes
     </div> 
   </body>

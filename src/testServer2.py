@@ -9,18 +9,21 @@ def start():
     # listen for upto 50 cnxns on port 8000
     sock.bind(('', 1337))
     sock.listen(50)
- 
+
+    print '[L] Socket Opened, listening for connections'
+
     while True:
         csock,caddr = sock.accept()
-        print "Connection from: ", caddr
+        print '[N] new connection from '+caddr[0]+':'+str(caddr[1])
         # Start a thread to service each cnxn
-        t = threading.Thread(target=handle_cnxn, args=(csock,))
+        t = threading.Thread(target=handle_cnxn, args=(csock,caddr,))
         t.start()
  
  
-def handle_cnxn(csock):
-    print 'new connection!'
+def handle_cnxn(csock, caddr):
     shake1 = csock.recv(1024)
+
+    print caddr[0]+'-> '+shake1
    
     shakelist = shake1.split("\r\n")
     # The body follows a \r\n after the 'headers'
@@ -29,9 +32,9 @@ def handle_cnxn(csock):
     print 'Got handshake'
     # Extract key1 and key2
     for elem in shakelist:
-        print elem
         if elem.startswith("Sec-WebSocket-Key:"):
-            key = elem[24:]  # Sec-WebSocket-Key1: is 20 chars
+            client64Key = elem[19:]  # Sec-WebSocket-Key1: is 20 chars
+            #print 'got key '+client64Key
         elif elem.startswith("Origin:"):
             ws_origin = elem[8:]
         elif elem.startswith("Host:"):
@@ -42,12 +45,14 @@ def handle_cnxn(csock):
             continue
  
     # Concat key1, key2, and the the body of the client handshake and take the md5 sum of it
-    key = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+    print 'got client key '+client64Key
+    key = client64Key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+    print 'got joint key '+key
     import hashlib, base64
     m = hashlib.sha1()
     m.update(key)
     d = base64.b64encode(m.digest())
-    print "got key "+d
+    print 'got base64 hash '+d
  
     # Send 'headers'
     # Modified to automatically adhere to the Same-Origin Policy.
@@ -58,7 +63,7 @@ def handle_cnxn(csock):
     csock.send("Sec-WebSocket-Accept: " + d + "\r\n")
     csock.send("Sec-WebSocket-Origin: " + ws_origin + "\r\n")
     csock.send("Sec-WebSocket-Location: ws://" + ws_host + ws_path + "\r\n")
-    csock.send("Sec-WebSocket-Protocol: chat\r\n")
+    #csock.send("Sec-WebSocket-Protocol: chat\r\n")
     csock.send("\r\n")
     #Send digest
     csock.send(d)
@@ -76,7 +81,10 @@ def handle_cnxn(csock):
     # This is dependent on you - what you wish to send to the browser
     i = 0
     while True:
-        send(u"%s" % (i))
+        send(str(i))
+        print caddr[0]+'-> '+str(i)
+        shake1 = csock.recv(1024)
+        print caddr[0]+'<- '+shake1
         i += 1
         sleep(1)
  
