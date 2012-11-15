@@ -1,13 +1,13 @@
 <project name="Caveman" default="dist" basedir=".">
-    <description>
-        Project Caveman
-    </description>
+  <description>
+    Project Caveman
+  </description>
   <!-- set global properties for this build -->
   <property name="src" location="src"/>
   <property name="build" location="build"/>
   <property name="dist"  location="dist"/>
 
-  <target name="init">
+  <target name="init" depends="versionInfo">
     <!-- Create the time stamp -->
     <tstamp/>
     <!-- Create the build directory structure used by compile -->
@@ -16,17 +16,42 @@
 
   <target name="compile" depends="init"
         description="compile the source " >
-    <!-- Compile the java code from ${src} into ${build} -->
-    <javac srcdir="${src}" destdir="${build}"/>
+    <buildnumber/>
+    <!--<javac srcdir="${src}" destdir="${build}"/>-->
+<!-- this target will automatically create an html file with
+    an incremented build number and version number-->
   </target>
+
+<!-- this target will automatically create an html file with
+    an incremented build number and version number-->
+    <target name="versionInfo" >
+        <propertyfile
+            file="version.properties" comment="Build version info">
+            <entry key="buildDate" type="date" value="now"/>
+            <entry key="buildNum" default="0" type="int" operation="+" value="1"/>
+        </propertyfile>
+        <copy file="version.html" tofile="${build}/version.html" overwrite="true" />
+        <replace
+            file="${build}/version.html"
+            value="value not found in version.properties"
+            propertyFile="version.properties">
+            <replacefilter
+                token="@buildDate@"
+                property="buildDate"/>
+            <replacefilter
+                token="@buildNum@"
+                property="buildNum"/>
+        </replace>
+    </target>
 
   <target name="dist" depends="compile"
         description="generate the distribution" >
     <!-- Create the distribution directory -->
+    <buildnumber/>
     <mkdir dir="${dist}/lib"/>
 
     <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
-    <jar jarfile="${dist}/lib/MyProject-${DSTAMP}.jar" basedir="${build}"/>
+    <!--<jar jarfile="${dist}/lib/MyProject-${DSTAMP}.jar" basedir="${build}"/>-->
   </target>
 
   <target name="clean"
