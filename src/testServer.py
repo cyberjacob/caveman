@@ -1,4 +1,4 @@
-import cherrypy, array
+import cherrypy
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 from ws4py.websocket import WebSocket
 
@@ -17,13 +17,14 @@ class cavemanWebSocket(WebSocket):
 		print 'client disconnected!'
 		clients.remove(self)
 
-	def received_message(self, message):
+	@classmethod
+	def received_message(cls, message):
 		""" Called by the server when the client sends a message.
 			We use this to relay the message to everybody else."""
 		print 'message recieved: '+str(message)
 		for client in clients:
 			client.send(message)
-    	
+
 
 cherrypy.config.update({'server.socket_port': 1337})
 WebSocketPlugin(cherrypy.engine).subscribe()
@@ -33,12 +34,14 @@ global clients
 clients = []
 
 class Root(object):
+	@classmethod
     @cherrypy.expose
-    def index(self):
+    def index(cls):
         handler = cherrypy.request.ws_handler
 
+    @classmethod
     @cherrypy.expose
-    def ws(self):
+    def ws(cls):
         # you can access the class instance through
         handler = cherrypy.request.ws_handler
 

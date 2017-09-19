@@ -1,8 +1,7 @@
 import socket
-import sys
 import threading
- 
- 
+
+
 def start():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -26,8 +25,6 @@ def handle_cnxn(csock, caddr):
     print caddr[0]+'-> '+shake1
    
     shakelist = shake1.split("\r\n")
-    # The body follows a \r\n after the 'headers'
-    body = shake1.split("\r\n\r\n")[1]
     
     print 'Got handshake'
     # Extract key1 and key2
