@@ -18,7 +18,7 @@ class Connection(object):
 	def run(self):
 		connected = True
 		while(connected):
-			x, _, z = select.select((self.socket,), (), (), 0)
+			x, _, _ = select.select((self.socket,), (), (), 0)
 			if x:
 				buf = self.socket.recv(1024)
 				if len(buf) == 0:

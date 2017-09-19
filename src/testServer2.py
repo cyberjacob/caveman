@@ -17,8 +17,8 @@ def start():
         # Start a thread to service each cnxn
         t = threading.Thread(target=handle_cnxn, args=(csock,caddr,))
         t.start()
- 
- 
+
+
 def handle_cnxn(csock, caddr):
     shake1 = csock.recv(1024)
 

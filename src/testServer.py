@@ -35,15 +35,15 @@ clients = []
 
 class Root(object):
 	@classmethod
-    @cherrypy.expose
-    def index(cls):
-        handler = cherrypy.request.ws_handler
+	@cherrypy.expose
+	def index(cls):
+		handler = cherrypy.request.ws_handler
 
-    @classmethod
-    @cherrypy.expose
-    def ws(cls):
-        # you can access the class instance through
-        handler = cherrypy.request.ws_handler
+	@classmethod
+	@cherrypy.expose
+	def ws(cls):
+		# you can access the class instance through
+		handler = cherrypy.request.ws_handler
 
 cherrypy.quickstart(Root(), '/', config={'/ws': {'tools.websocket.on': True,
-                                                 'tools.websocket.handler_cls': cavemanWebSocket}})
+												'tools.websocket.handler_cls': cavemanWebSocket}})
